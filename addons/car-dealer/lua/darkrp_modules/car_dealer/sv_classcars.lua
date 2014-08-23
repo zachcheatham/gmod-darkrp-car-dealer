@@ -5,7 +5,13 @@ end
 local function playerChangedTeam(ply, oldTeam, newTeam)
 	if ply.currentCar and ply.currentCar.allowedTeams then
 		if not table.HasValue(ply.currentCar.allowedTeams) then
-			ply.currentCar:Remove()
+			CarDealer.despawnCar(ply)
+		end
+	end
+	
+	if ply.currentCarAddon and ply.currentCarAddon.allowedTeams then
+		if not table.HasValue(ply.currentCarAddon.allowedTeams) then
+			CarDealer.despawnCarAddon(ply)
 		end
 	end
 end

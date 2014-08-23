@@ -2,8 +2,6 @@ if not CarDealer then
 	CarDealer = {}
 end
 
-print "cl_shop"
-
 local SHOP_WIDTH, SHOP_HEIGHT = 553, 453
 
 function CarDealer.openShop(type)
@@ -27,10 +25,17 @@ function CarDealer.openShop(type)
 		
 		if CarDealer.inventory and CarDealer.inventory[type] then
 			for _, id in pairs(CarDealer.inventory[type]) do
-				local vehicle = allVehicles[id]		
-				local icon = shop.inventory:Add("CarDealerShopIcon")
-				icon:SetCar(type, {id=id}, true)
-				icon:SetName(vehicle.Name)
+				local car = CarDealer.getCarDetails(type, id)
+				if not car.allowedTeams or table.HasValue(car.allowedTeams, LocalPlayer():Team()) then
+					local vehicle = allVehicles[id]
+					if vehicle then
+						local icon = shop.inventory:Add("CarDealerShopIcon")
+						icon:SetCar(type, {id=id}, true)
+						icon:SetName(vehicle.Name)
+					else
+						MsgC(Color(255, 255, 255), "Missing car " .. id .. " in Car Dealer!")
+					end
+				end
 			end
 		end
 	end
@@ -39,11 +44,17 @@ function CarDealer.openShop(type)
 	shop.buy = vgui.Create("DIconLayout", shop.buyScroll)
 	shop.buy:Dock(FILL)
 	
-	for _, v in ipairs(CarDealer.cars[type].cars) do
-		local vehicle = allVehicles[v.id]
-		local icon = shop.buy:Add("CarDealerShopIcon")
-		icon:SetCar(type, v)
-		icon:SetName(vehicle.Name)
+	for _, v in ipairs(CarDealer.cars[type].cars) do	
+		if not v.allowedTeams or table.HasValue(v.allowedTeams, LocalPlayer():Team()) then
+			local vehicle = allVehicles[v.id]
+			if vehicle then
+				local icon = shop.buy:Add("CarDealerShopIcon")
+				icon:SetCar(type, v)
+				icon:SetName(vehicle.Name)
+			else
+				MsgC(Color(255, 0, 0), "Missing car " .. v.id .. " in Car Dealer!\n")
+			end
+		end
 	end
 	
 	if not CarDealer.cars[type].noInventory then

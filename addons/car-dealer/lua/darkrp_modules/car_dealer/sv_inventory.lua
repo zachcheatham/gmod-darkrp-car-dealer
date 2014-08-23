@@ -26,12 +26,10 @@ function CarDealer.addToInventory(ply, type, id)
 	end
 	
 	table.insert(CarDealer.inventory[ply:SteamID()][type], id)
-	CarDealer.saveInventory(ply)
+	CarDealer.saveInventory(ply:SteamID())
 end
 
-function CarDealer.saveInventory(ply)
-	local steamID = ply:SteamID()
-	
+function CarDealer.saveInventory(steamID)	
 	if not CarDealer.inventory[steamID] then
 		return
 	end
@@ -40,8 +38,8 @@ function CarDealer.saveInventory(ply)
 		file.CreateDir("car_dealer")
 	end
 	
-	steamID = string.Replace(steamID, ":", "-")
-	file.Write("car_dealer/" .. steamID .. ".txt", util.TableToJSON(CarDealer.inventory[ply:SteamID()]))
+	local steamIDF = string.Replace(steamID, ":", "-")
+	file.Write("car_dealer/" .. steamIDF .. ".txt", util.TableToJSON(CarDealer.inventory[steamID]))
 end
 
 function CarDealer.loadInventory(ply)
@@ -66,3 +64,11 @@ local function playerDisconnected(ply)
 	CarDealer.inventory[ply:SteamID()] = nil
 end
 hook.Add("PlayerAuthed", "CarDealer_PlayerAuthed", playerAuthed)
+
+-- Fix for players losing inventories when DarkRP gets reloaded
+local function loadAll()
+	for _, ply in ipairs(player.GetAll()) do
+		CarDealer.loadInventory(ply)
+	end
+end
+loadAll()

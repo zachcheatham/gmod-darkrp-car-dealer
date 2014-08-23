@@ -1,8 +1,6 @@
-if not CarDealerShop then
-	CarDealerShop = {}
+if not CarDealer then
+	CarDealer = {}
 end
-
-print "sv_shop"
 
 util.AddNetworkString("CarDealer_OpenShop")
 util.AddNetworkString("CarDealer_BuyCar")
@@ -13,27 +11,27 @@ util.AddNetworkString("CarDealer_Inventory")
 function CarDealer.purchaseCar(ply, type, id)
 	local car = CarDealer.getCarDetails(type, id)
 
-	if ply:canAfford(car.price) then
-		if not ply.hasLevel or ply:hasLevel(car.level) then
-			if not CarDealer.ownsVehicle(ply, type, id) then
-				local vehicles = list.Get("Vehicles")
-				local vehicle = vehicles[id]
-				
-				ply:addMoney(-car.price)
-				if not CarDealer.cars[type].noInventory then
-					CarDealer.addToInventory(ply, type, id)
-				end
-				CarDealer.spawnCar(ply, vehicle, CarDealer.cars[type].noInventory, CarDealer.cars[type].teams)
-				
-				DarkRP.notify(ply, 2, 4, "You have purchased the " .. vehicle.Name .. " for $" .. car.price .. "!")
-			else
-				DarkRP.notify(ply, 1, 4, "You already own this vehicle!")
-			end
-		else
-			DarkRP.notify(ply, 1, 4, "You are not the right level for that vehicle!")
-		end
-	else
+	if not ply:canAfford(car.price) then
 		DarkRP.notify(ply, 1, 4, "You cannot afford that vehicle!")
+	elseif car.level and ply.hasLevel and not ply:hasLevel(car.level) then
+		DarkRP.notify(ply, 1, 4, "You are not the right level for that vehicle!")
+	elseif car.allowedTeams and not table.HasValue(car.allowedTeams, ply:Team()) then
+		DarkRP.notify(ply, 1, 4, "You are not the right job for that vehicle!")
+	elseif CarDealer.ownsVehicle(ply, type, id) then
+		DarkRP.notify(ply, 1, 4, "You already own this vehicle!")
+	else
+		local vehicles = list.Get("Vehicles")
+		local vehicle = vehicles[id]
+		
+		ply:addMoney(-car.price)
+		if not CarDealer.cars[type].noInventory then
+			CarDealer.addToInventory(ply, type, id)
+		end
+		
+		local teams = car.allowedTeams or CarDealer.cars[type].teams
+		CarDealer.spawnCar(ply, type, id, vehicle, CarDealer.cars[type].noInventory, teams, car.addon)
+		
+		DarkRP.notify(ply, 2, 4, "You have purchased the " .. vehicle.Name .. " for $" .. car.price .. "!")
 	end
 end
 
@@ -59,15 +57,20 @@ end)
 net.Receive("CarDealer_SpawnCar", function(len, ply)
 	local type = net.ReadString()
 	local id = net.ReadString()
-
-	if CarDealer.ownsVehicle(ply, type, id) then
+	local car = CarDealer.getCarDetails(type, id)
+	
+	if not CarDealer.ownsVehicle(ply, type, id) then
+		DarkRP.notify(ply, 1, 4, "You don't own that vehicle!")
+	elseif car.allowedTeams and not table.HasValue(car.allowedTeams, ply:Team()) then
+		DarkRP.notify(ply, 1, 4, "You are not the right job for this vehicle!")
+	else
 		local vehicles = list.Get("Vehicles")
 		local vehicle = vehicles[id]
-		CarDealer.spawnCar(ply, vehicle)
+		local teams = car.allowedTeams or CarDealer.cars[type].teams
+		
+		CarDealer.spawnCar(ply, type, id, vehicle, CarDealer.cars[type].noInventory, teams, car.addon)
 		
 		DarkRP.notify(ply, 2, 4, "You have respawned your " .. vehicle.Name .. "!")
-	else
-		DarkRP.notify(ply, 1, 4, "You don't own that vehicle!")
 	end
 end)
 
@@ -76,6 +79,7 @@ net.Receive("CarDealer_DespawnCar", function(len, ply)
 		if not ply.currentCar.noPocket then
 			local name = ply.currentCar.VehicleTable.Name
 			CarDealer.despawnCar(ply)
+			CarDealer.despawnCarAddon(ply)
 			DarkRP.notify(ply, 2, 4, "You have pocketed your " .. name .. "!")
 		else
 			DarkRP.notify(ply, 1, 4, "You cannot pocket a " .. ply.currentCar.VehicleTable.Name .. "!")
