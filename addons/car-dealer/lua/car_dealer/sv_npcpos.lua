@@ -23,7 +23,7 @@ local function saveLocations(ply)
 	else
 		local saveTable = {}
 		for _, ent in ipairs(ents.GetAll()) do
-			if string.sub(ent:GetClass(), 1, 10) == "car_dealer" then
+			if string.sub(ent:GetClass(), 1, 10) == "car_dealer" or ent:GetClass() == "chopshop_employee" then
 				local position = ent:GetPos()
 				local angles = ent:GetAngles()
 			

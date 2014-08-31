@@ -59,7 +59,9 @@ end
 function CarDealer.despawnCar(ply)
 	if IsValid(ply) then
 		if ply.currentCar and IsValid(ply.currentCar) then
-			-- TODO: Save customizations!
+			if not ply.currentCar.noPocket then
+				CarDealer.saveCustomizations(ply, ply.currentCar)
+			end
 			ply.currentCar:Remove()
 		end
 
@@ -84,11 +86,28 @@ function CarDealer.destroyCar(ent)
 		local id = ent.carDealerCarID
 		local type = ent.carDealerType
 
-		table.RemoveByValue(CarDealer.inventory[steamID][type], id)
+		CarDealer.removeFromInventory(steamID, type, id)
 		CarDealer.saveInventory(steamID)
 		
 		if IsValid(ply) then
 			DarkRP.notify(ply, 1, 4, "Your " .. ent.VehicleName .. " has been destroyed!")
 		end
 	end
+end
+
+function CarDealer.isCarNearEntity(ent, vehicle)
+	return (ent:GetPos():Distance(vehicle:GetPos()) < 500)
+end
+
+function CarDealer.getNearbyCars(ent)
+	local cars = {}
+	
+	for _, e in ipairs(ents.FindInSphere(ent:GetPos(), CarDealer.chopDistance)) do
+		if e.carDealerCar then
+			local car = {ent=e, type=e.carDealerType, id=e.carDealerCarID, owner=e.Owner}
+			table.insert(cars, car)
+		end
+	end
+	
+	return cars
 end

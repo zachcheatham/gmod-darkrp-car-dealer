@@ -1,6 +1,6 @@
 ENT.Base = "base_ai"
 ENT.Type = "ai"
-ENT.PrintName		= "Car Dealer"
+ENT.PrintName		= "Chop Shop Employee"
 ENT.Author			= "zachcheatham"
 ENT.Category		= "KillerBeez"
 ENT.Contact			= "N/A"
