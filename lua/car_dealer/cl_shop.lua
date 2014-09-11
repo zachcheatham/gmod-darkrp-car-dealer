@@ -32,6 +32,9 @@ function CarDealer.openShop(type, npc)
 						local icon = shop.inventory:Add("CarDealerShopIcon")
 						icon:SetCar(type, {id=id}, true)
 						icon:SetName(vehicle.Name)
+						icon.DoClick = function(self)
+							CarDealer.spawnCar(npc, id)
+						end
 					else
 						MsgC(Color(255, 255, 255), "Missing car " .. id .. " in Car Dealer!")
 					end
@@ -51,6 +54,9 @@ function CarDealer.openShop(type, npc)
 				local icon = shop.buy:Add("CarDealerShopIcon")
 				icon:SetCar(type, v)
 				icon:SetName(vehicle.Name)
+				icon.DoClick = function()
+					CarDealer.buyCar(npc, v.id)
+				end
 			else
 				MsgC(Color(255, 0, 0), "Missing car " .. v.id .. " in Car Dealer!\n")
 			end
@@ -98,16 +104,16 @@ function CarDealer.openShop(type, npc)
 	end
 end
 
-function CarDealer.buyCar(type, id)
+function CarDealer.buyCar(npc, id)
 	net.Start("CarDealer_BuyCar")
-	net.WriteString(type)
+	net.WriteEntity(npc)
 	net.WriteString(id)
 	net.SendToServer()
 end
 
-function CarDealer.spawnCar(type, id)
+function CarDealer.spawnCar(npc, id)
 	net.Start("CarDealer_SpawnCar")
-	net.WriteString(type)
+	net.WriteEntity(npc)
 	net.WriteString(id)
 	net.SendToServer()
 end

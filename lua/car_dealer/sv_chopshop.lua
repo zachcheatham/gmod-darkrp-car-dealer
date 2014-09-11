@@ -97,7 +97,7 @@ function CarDealer.startChopping(ply, npc, ent)
 			-- Wait until chopping is done
 			timer.Create("CarDealer_Chop" .. ply:EntIndex(), CarDealer.chopTime, 1, function()
 				local value = CarDealer.getCarDetails(ent.carDealerType, ent.carDealerCarID).price * CarDealer.chopValue
-
+				
 				-- Remove the chop validator
 				choppingCars[ply:EntIndex()] = nil
 				if table.Count(choppingCars) < 1 then -- Remove the hook if no other chops are occuring
@@ -123,6 +123,7 @@ function CarDealer.startChopping(ply, npc, ent)
 						
 						-- Notify the player
 						sendChopStop(ply)
+						ply:addMoney(value)
 						DarkRP.notify(ply, 0, 4, "Vehicle has been dismantled! You made $" .. value .. ".")
 					end
 				end

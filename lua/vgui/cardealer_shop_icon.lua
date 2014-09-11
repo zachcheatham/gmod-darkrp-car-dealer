@@ -58,6 +58,10 @@ function PANEL:SetCar( type, car, isInventory )
 		else
 			self.CostLabel:SetText( "$" .. self.Cost )
 		end
+		
+		if car.vip then
+			self:SetAdminOnly(true)
+		end
 	end
 	
 	self:SetMaterial("entities/" .. car.id .. ".png")
@@ -99,14 +103,6 @@ end
 
 function PANEL:DoRightClick()
 
-end
-
-function PANEL:DoClick()
-	if self.IsInventory then
-		CarDealer.spawnCar(self.Type, self.VehicleID)
-	else
-		CarDealer.buyCar(self.Type, self.VehicleID)
-	end
 end
 
 function PANEL:Paint( w, h )
@@ -156,7 +152,7 @@ function PANEL:Paint( w, h )
 
 	if ( self.AdminOnly ) then
 		surface.SetMaterial( matOverlay_AdminOnly )
-		surface.DrawTexturedRect( self.Border + 8, self.Border + 8, 16, 16 )
+		surface.DrawTexturedRect( self.Border + 8, self:GetTall() - 16 - 8 - 20, 16, 16 )
 	end
 end
 

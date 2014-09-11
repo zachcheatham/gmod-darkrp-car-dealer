@@ -2,15 +2,28 @@ if not CarDealerShop then
 	CarDealerShop = {}
 end
 
-function CarDealer.spawnCar(ply, type, id, vehicle, noPocket, teams, addon)
-	if addon then
+------------------
+-- CAR SPAWNING --
+------------------
+
+function CarDealer.spawnCar(ply, npc, id, car, vehicle)
+	if car.addon then
 		CarDealer.despawnCarAddon(ply)
 	else
 		CarDealer.despawnCar(ply)
 	end
 
-	local position = ply:GetPos() + ply:GetForward() * -150
-	
+	local position = Vector(0,0,0)
+	local angle = Angle(0,0,0)
+		
+	if npc.carDealerSpawnPoints then
+		local spawnPoint, id = table.Copy(table.Random(npc.carDealerSpawnPoints))
+		position = spawnPoint.position + Vector(0, 0, 100)
+		angle = spawnPoint.angle
+	else
+		position = ply:GetPos() + ply:GetForward() * -150
+	end
+		
 	local ent = ents.Create(vehicle.Class)
 	ent:SetModel(vehicle.Model)
 	if vehicle.KeyValues then
@@ -18,8 +31,10 @@ function CarDealer.spawnCar(ply, type, id, vehicle, noPocket, teams, addon)
 			ent:SetKeyValue(k, v)
 		end
 	end
+	
 	ent:SetPos(position)
-	ent.VehicleName = vehicle.Name
+	ent:SetAngles(angle)
+	ent.VehicleName = id
 	ent.VehicleTable = vehicle
 	ent:Spawn()
 	ent:Activate()
@@ -32,20 +47,22 @@ function CarDealer.spawnCar(ply, type, id, vehicle, noPocket, teams, addon)
 	end
 	ent:CPPISetOwner(ply)
 	
-	
 	--Custom
 	ent.carDealerCar = true
-	ent.carDealerType = type
+	ent.carDealerType = npc.carDealerType
 	ent.carDealerCarID = id
-	if noPocket then
+	
+	local noPocket = car.noInventory or CarDealer.cars[npc.carDealerType].noInventory
+	if noPocket == true then
 		ent.noPocket = noPocket
 	end
 	
+	local teams = car.allowedTeams or CarDealer.cars[npc.carDealerType].teams
 	if teams then
 		ent.allowedTeams = teams
 	end
 	
-	if addon then
+	if car.addon then
 		ply.currentCarAddon = ent
 	else
 		ply.currentCar = ent
@@ -79,21 +96,24 @@ function CarDealer.despawnCarAddon(ply)
 	end
 end
 
-function CarDealer.destroyCar(ent)
-	if IsValid(ent) and ent.carDealerCar then		
-		local ply = ent.Owner
-		local steamID = ent.OwnerID
-		local id = ent.carDealerCarID
-		local type = ent.carDealerType
-
-		CarDealer.removeFromInventory(steamID, type, id)
-		CarDealer.saveInventory(steamID)
-		
-		if IsValid(ply) then
-			DarkRP.notify(ply, 1, 4, "Your " .. ent.VehicleName .. " has been destroyed!")
-		end
+------------------
+-- SHOP HELPERS --
+------------------
+function CarDealer.ownsVehicle(ply, type, id)
+	if not CarDealer.inventory[ply:SteamID()] then
+		return false
 	end
+	
+	if not CarDealer.inventory[ply:SteamID()][type] then
+		return false
+	end
+		
+	return (CarDealer.inventory[ply:SteamID()][type][id] ~= nil)
 end
+
+----------------------
+-- DISTANCE HELPERS --
+----------------------
 
 function CarDealer.isCarNearEntity(ent, vehicle)
 	return (ent:GetPos():Distance(vehicle:GetPos()) < 500)
